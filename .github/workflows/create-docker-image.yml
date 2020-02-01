@@ -37,10 +37,10 @@ jobs:
         docker run --rm ${PKG_TAG} --version
 #        docker tag "${PKG_TAG}"
 
-    - name: Scan docker image
-      run: |
-        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-          -v ${HOME}/.cache:/root/.cache aquasec/trivy:latest --exit-code 1 ${PKG_TAG}
+#    - name: Scan docker image
+#      run: |
+#        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+#          -v ${HOME}/.cache:/root/.cache aquasec/trivy:latest --exit-code 1 ${PKG_TAG}
 
     - name: Push to Packages
       env:
