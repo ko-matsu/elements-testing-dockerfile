@@ -1,7 +1,7 @@
 FROM node:12.14.1-buster-slim
 
 # install dependencies
-RUN apt update && apt install -y \
+RUN apt update && apt-get install -y \
     gpg \
     wget \
     build-essential \
