@@ -34,8 +34,8 @@ jobs:
     - name: Build docker image
       run: |
         docker build . -t "${PKG_TAG}" --build-arg BASE_IMAGE="${{ matrix.baseimage }}"
-        docker tag "${PKG_TAG}"
         docker run --rm ${PKG_TAG} --version
+#        docker tag "${PKG_TAG}"
 
     - name: Scan docker image
       run: |
