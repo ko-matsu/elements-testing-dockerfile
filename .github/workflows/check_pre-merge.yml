@@ -1,0 +1,24 @@
+name: Lint Check
+
+on: 
+  push:
+    branches:
+    - master
+    - develop
+  pull_request:
+    branches:
+    - master
+    - develop
+
+env:
+  DOCKER_BASE_NAME: docker.pkg.github.com/${{ github.repository }}/mdbook
+
+jobs:
+  hadolint:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install
+      run: brew install hadolint
+    - name: hadolint
+      run: hadolint ./Dockerfile
