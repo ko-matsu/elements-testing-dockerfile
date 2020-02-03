@@ -1,0 +1,41 @@
+name: Push Docker Image
+
+on: 
+  push:
+    tags:
+    - 'v*'
+
+env:
+  DOCKER_BASE_NAME: docker.pkg.github.com/${{ github.repository }}/elements-testing
+  REPOSITORY_PATH: ${{ github.repository }}
+
+jobs:
+  upload-image:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        baseimage: ['node:12.14.1-buster-slim']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get tag version
+      id: get_version
+      run: |
+        echo ::set-env name=PKG_TAG::${DOCKER_BASE_NAME}:${GITHUB_REF/refs\/tags\//}
+        echo ::set-env name=REP_USER_NAME::${REPOSITORY_PATH/\/elements-testing-dockerfile\//}
+    - name: Build docker image
+      run: |
+        docker build . -t "${PKG_TAG}"
+        docker run --rm ${PKG_TAG} --version
+
+#    - name: Scan docker image
+#      run: |
+#        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+#          -v ${HOME}/.cache:/root/.cache aquasec/trivy:latest --exit-code 1 ${PKG_TAG}
+
+    - name: Push to Packages
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u ${REP_USER_NAME} --password-stdin
+        docker push "${PKG_TAG}"
