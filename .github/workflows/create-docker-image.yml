@@ -6,7 +6,7 @@ on:
     - 'v*'
 
 env:
-  DOCKER_BASE_NAME: docker.pkg.github.com/${{ github.repository }}/elements-testing
+  DOCKER_BASE_NAME: ghcr.io/${{ github.repository }}/elements-testing
   REPOSITORY_PATH: ${{ github.repository }}
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        baseimage: ['node:12.16.3-buster-slim']
+        baseimage: ['node:14.9.0-buster-slim']
 
     steps:
     - uses: actions/checkout@v2
@@ -23,6 +23,25 @@ jobs:
       run: |
         echo ::set-env name=PKG_TAG::${DOCKER_BASE_NAME}:${GITHUB_REF/refs\/tags\//}
         echo ::set-env name=REP_USER_NAME::${REPOSITORY_PATH/\/elements-testing-dockerfile\//}
+
+    - uses: docker/setup-qemu-action@v1
+      name: Set up QEMU
+    - uses: docker/setup-buildx-action@v1
+      name: Set up Docker Buildx
+
+    - uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        platforms: linux/amd64
+        tags: ${PKG_TAG}
+
 #      run: |
 #        if [ "${{ github.event_name }}" = 'release' ]; then
 #            export TAG_NAME="${{ github.event.release.tag_name }}"
@@ -30,21 +49,17 @@ jobs:
 #            export TAG_NAME="latest"
 #        fi
 #        echo "::set-env name=PKG_TAG::${DOCKER_BASE_NAME}:${TAG_NAME}"
-
-    - name: Build docker image
-      run: |
-        docker build . -t "${PKG_TAG}" --build-arg BASE_IMAGE="${{ matrix.baseimage }}"
-        docker run --rm ${PKG_TAG} --version
-#        docker tag "${PKG_TAG}"
-
+#    - name: Build docker image
+#      run: |
+#        docker build . -t "${PKG_TAG}" --build-arg BASE_IMAGE="${{ matrix.baseimage }}"
+#        docker run --rm ${PKG_TAG} --version
+##        docker tag "${PKG_TAG}"
 #    - name: Scan docker image
 #      run: |
-#        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-#          -v ${HOME}/.cache:/root/.cache aquasec/trivy:latest --exit-code 1 ${PKG_TAG}
-
-    - name: Push to Packages
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u ${REP_USER_NAME} --password-stdin
-        docker push "${PKG_TAG}"
+#        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${HOME}/.cache:/root/.cache aquasec/trivy:latest --exit-code 1 ${PKG_TAG}
+#    - name: Push to Packages
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      run: |
+#        echo "${GITHUB_TOKEN}" | docker login ghcr.io -u ${REP_USER_NAME} --password-stdin
+#        docker push "${PKG_TAG}"
