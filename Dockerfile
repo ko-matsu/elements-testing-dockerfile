@@ -1,11 +1,13 @@
-FROM node:14.9.0-buster-slim
+FROM node:14.15.0-buster-slim
 
 # install dependencies
 RUN apt update && apt install -y \
     gpg \
     wget \
     build-essential \
-    python \
+    python3 \
+    python3-dev \
+    python3-pip \
     git \
   && rm -rf /var/lib/apt/lists/*
 
