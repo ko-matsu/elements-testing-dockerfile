@@ -4,6 +4,7 @@ on:
   push:
     tags:
     - 'v*'
+    - 'bitcoin-*'
 
 env:
   DOCKER_BASE_NAME: docker.pkg.github.com/${{ github.repository }}/elements-testing
