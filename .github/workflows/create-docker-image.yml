@@ -14,30 +14,26 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        baseimage: ['node:12.16.3-buster-slim']
+        baseimage: ['node:14.15.0-buster-slim']
 
     steps:
     - uses: actions/checkout@v2
     - name: Get tag version
       id: get_version
       run: |
-        echo ::set-env name=PKG_TAG::${DOCKER_BASE_NAME}:${GITHUB_REF/refs\/tags\//}
-        echo ::set-env name=REP_USER_NAME::${REPOSITORY_PATH/\/elements-testing-dockerfile\//}
-#      run: |
-#        if [ "${{ github.event_name }}" = 'release' ]; then
-#            export TAG_NAME="${{ github.event.release.tag_name }}"
-#        else
-#            export TAG_NAME="latest"
-#        fi
-#        echo "::set-env name=PKG_TAG::${DOCKER_BASE_NAME}:${TAG_NAME}"
+        echo ::set-output name=PKG_TAG::${DOCKER_BASE_NAME}:${GITHUB_REF/refs\/tags\//}
+        echo ::set-output name=REP_USER_NAME::${REPOSITORY_PATH/\/elements-testing-dockerfile\//}
 
     - name: Build docker image
+      env:
+        PKG_TAG: ${{steps.get_version.outputs.PKG_TAG}}
       run: |
         docker build . -t "${PKG_TAG}" --build-arg BASE_IMAGE="${{ matrix.baseimage }}"
         docker run --rm ${PKG_TAG} --version
-#        docker tag "${PKG_TAG}"
 
 #    - name: Scan docker image
+#      env:
+#        PKG_TAG: ${{steps.get_version.outputs.PKG_TAG}}
 #      run: |
 #        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
 #          -v ${HOME}/.cache:/root/.cache aquasec/trivy:latest --exit-code 1 ${PKG_TAG}
@@ -45,6 +41,8 @@ jobs:
     - name: Push to Packages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PKG_TAG: ${{steps.get_version.outputs.PKG_TAG}}
+        REP_USER_NAME: ${{steps.get_version.outputs.REP_USER_NAME}}
       run: |
         echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u ${REP_USER_NAME} --password-stdin
         docker push "${PKG_TAG}"
